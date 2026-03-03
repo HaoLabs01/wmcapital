@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "cayman_fund": {
+      "name": "Cayman USD Fund SPC",
+      "type": "fund",
+      "currency": "USD",
+      "holdings": [
+        {
+          "name": "Fund A - Technology VC",
+          "type": "fund_investment",
+          "nav_date": "2026-01-31",
+          "nav_per_share": 1250.0,
+          "shares": 1000,
+          "total_value": 1500000,
+          "last_updated": "2026-02-27"
+        },
+        {
+          "name": "Fund B - Healthcare PE",
+          "type": "fund_investment",
+          "nav_date": "2026-01-31",
+          "nav_per_share": 980.0,
+          "shares": 800,
+          "total_value": 784000.0,
+          "last_updated": "2026-02-12"
+        },
+        {
+          "name": "Direct Investment - Tech Startup",
+          "type": "direct_investment",
+          "valuation_date": "2026-01-31",
+          "total_value": 500000.0,
+          "last_updated": "2026-02-10"
+        }
+      ],
+      "cash_balance": 250000.0,
+      "total_nav": 3034000.0,
+      "last_valuation_date": "2026-01-31"
+    },
+    "miao_holdings": {
+      "name": "Miao Holdings",
+      "type": "holding_company",
+      "currency": "USD",
+      "holdings": [
+        {
+          "name": "Direct Investment - Real Estate",
+          "type": "direct_investment",
+          "valuation_date": "2026-01-31",
+          "total_value": 1200000.0,
+          "last_updated": "2026-02-08"
+        },
+        {
+          "name": "Private Equity Fund C",
+          "type": "fund_investment",
+          "nav_date": "2026-01-31",
+          "nav_per_share": 1100.0,
+          "shares": 500,
+          "total_value": 550000.0,
+          "last_updated": "2026-02-14"
+        }
+      ],
+      "cash_balance": 100000.0,
+      "total_nav": 1850000.0,
+      "last_valuation_date": "2026-01-31"
+    },
+    "private_banking": {
+      "name": "Private Banking Accounts",
+      "type": "banking",
+      "currency": "USD",
+      "holdings": [
+        {
+          "name": "Goldman Sachs Private Account",
+          "type": "banking_account",
+          "balance": 700000.0,
+          "last_updated": "2026-02-26"
+        },
+        {
+          "name": "Morgan Stanley Private Account",
+          "type": "banking_account",
+          "balance": 700000.0,
+          "last_updated": "2026-02-26"
+        }
+      ],
+      "cash_balance": 1400000.0,
+      "total_nav": 1400000.0,
+      "last_valuation_date": "2026-02-26"
+    }
+  },
+  "consolidated_view": {
+    "total_portfolio_value": 6284000.0,
+    "last_updated": "2026-02-27",
+    "allocation_by_entity": {
+      "cayman_fund": 48.28,
+      "miao_holdings": 29.44,
+      "private_banking": 22.28
+    },
+    "allocation_by_asset_type": {
+      "fund_investments": 45.1,
+      "direct_investments": 27.05,
+      "cash_and_bank": 50.13
+    }
+  }
+}
