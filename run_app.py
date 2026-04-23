@@ -3,8 +3,8 @@ import sys
 import os
 
 # Change to app directory
-os.chdir('/home/admin/web_apps/portfolio_management')
-sys.path.insert(0, '/home/admin/web_apps/portfolio_management')
+os.chdir('<BASE_DIR>')
+sys.path.insert(0, '<BASE_DIR>')
 
 # Import and run
 from app import AnalyticsHandler, CURRENT_NAV_DATA, CURRENT_METRICS
@@ -13,7 +13,7 @@ import time
 
 PORT = 8082
 print(f'🚀 WM Fund Analytics Pro 启动中...')
-print(f'📍 访问地址: http://123.56.17.17:{PORT}')
+print(f'📍 访问地址: http://<YOUR_SERVER_IP>:{PORT}')
 print(f'📍 本地访问: http://localhost:{PORT}')
 
 # Retry binding

@@ -1,0 +1,94 @@
+# Git 忽略文件配置
+
+# 数据文件（包含真实数据）
+data/upload.csv
+data/backup/
+data/*.csv
+!data/upload_example.csv
+!data/portfolios.json
+
+# 日志文件
+*.log
+logs/
+/tmp/
+/var/log/
+
+# 配置文件（可能包含敏感信息）
+.env
+.env.local
+config.local.py
+*.local.py
+settings.local.py
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+ENV/
+env/
+.venv
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~
+
+# 服务文件（包含具体路径）
+*.service
+/etc/systemd/
+
+# 内部文档（包含敏感链接）
+ONLINE_EDIT_GUIDE.md
+FEISHU_SYNC_PLAN.md
+DATA_UPDATE_INTERNAL.md
+
+# 测试文件
+test_*.py
+*_test.py
+tests/
+
+# 覆盖率报告
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml

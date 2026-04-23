@@ -17,7 +17,7 @@ except ImportError:
     print("⚠️ AKShare未安装，使用模拟数据")
 
 # 数据缓存目录
-CACHE_DIR = '/home/admin/web_apps/portfolio_management/data/market'
+CACHE_DIR = '<BASE_DIR>/data/market'
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 def get_index_data(index_code="000905", start_date=None, end_date=None):

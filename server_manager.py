@@ -27,8 +27,8 @@ def wait_for_port_free(port, max_wait=30):
 
 def start_server():
     """Start the analytics server"""
-    os.chdir('/home/admin/web_apps/portfolio_management')
-    sys.path.insert(0, '/home/admin/web_apps/portfolio_management')
+    os.chdir('<BASE_DIR>')
+    sys.path.insert(0, '<BASE_DIR>')
     
     from app import AnalyticsHandler, CURRENT_NAV_DATA, CURRENT_METRICS
     

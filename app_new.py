@@ -410,7 +410,7 @@ def parse_csv_data(csv_content):
 import os
 
 # 数据文件路径
-csv_data_file = '/home/admin/web_apps/portfolio_management/data/upload.csv'
+csv_data_file = '/home/admin/.openclaw/workspace/wmcapital/data/upload.csv'
 
 # 全局变量
 CURRENT_NAV_DATA = []
@@ -444,7 +444,7 @@ except Exception as e:
 
 # ============== Web界面 ==============
 
-with open('/home/admin/web_apps/portfolio_management/app_new.html', 'r', encoding='utf-8') as f:
+with open('/home/admin/.openclaw/workspace/wmcapital/app_new.html', 'r', encoding='utf-8') as f:
     HTML_TEMPLATE = f.read()
 
 # ============== HTTP处理 ==============
@@ -507,7 +507,7 @@ class AnalyticsHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path.startswith('/static/'):
             # 提供静态文件服务
             import os
-            file_path = '/home/admin/web_apps/portfolio_management' + self.path
+            file_path = '/home/admin/.openclaw/workspace/wmcapital' + self.path
             if os.path.exists(file_path) and os.path.isfile(file_path):
                 self.send_response(200)
                 # 根据文件扩展名设置 Content-Type
@@ -659,13 +659,13 @@ class AnalyticsHandler(http.server.SimpleHTTPRequestHandler):
 
 # ============== 主程序 ==============
 
-PORT = 8082
+PORT = 80
 
 def main():
     print("=" * 60)
     print("📊 WM Fund Analytics - 基金业绩评价系统 v2.0")
     print("=" * 60)
-    print(f"📍 访问地址: http://123.56.17.17:{PORT}")
+    print(f"📍 访问地址: http://<YOUR_SERVER_IP>:{PORT}")
     print(f"📍 本地访问: http://localhost:{PORT}")
     print()
     print(f"📊 支持功能:")
@@ -680,6 +680,7 @@ def main():
     print("=" * 60)
     
     # 启动服务
+    socketserver.TCPServer.allow_reuse_address = True
     import time
     max_retries = 3
     for attempt in range(max_retries):
