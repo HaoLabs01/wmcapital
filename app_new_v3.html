@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WM Capital · 基金业绩评价系统</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif; }
+  .up { color: #E53E3E; }
+  .down { color: #38A169; }
+  .up-bg { background: #FEE2E2; color: #991B1B; }
+  .down-bg { background: #DCFCE7; color: #166534; }
+  .badge { padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; }
+  .metric { transition: transform .15s, box-shadow .15s; }
+  .metric:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+  .nav-link.active { background: #EEF2FF; color: #4F46E5; font-weight: 600; }
+  .scroll-area::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .fade-in { animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<header class="bg-white border-b border-slate-200 px-6 py-3 sticky top-0 z-40 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-purple-600 text-white flex items-center justify-center font-bold">W</div>
+    <div>
+      <div class="font-semibold">WM Capital · 基金业绩评价</div>
+      <div class="text-xs text-slate-500">多维度指标分析 · 夏普比率 · 最大回撤 · 风险调整收益</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <div id="dataStatus" class="text-xs text-slate-500">加载中...</div>
+    <button onclick="location.reload()" class="text-sm border border-slate-200 rounded px-3 py-1.5 hover:bg-slate-50">🔄 刷新</button>
+  </div>
+</header>
+
+<div class="flex">
+  <aside class="w-56 bg-white border-r border-slate-200 py-4 px-3 sticky top-[57px] self-start" style="height: calc(100vh - 57px);">
+    <nav class="space-y-1" id="sidenav">
+      <a class="nav-link active flex items-center gap-3 px-3 py-2 rounded text-slate-700 cursor-pointer" data-view="home">
+        <span class="w-5 text-center">⌂</span><span class="text-sm">总览</span>
+      </a>
+      <a class="nav-link flex items-center gap-3 px-3 py-2 rounded text-slate-700 cursor-pointer" data-view="ranking">
+        <span class="w-5 text-center">☤</span><span class="text-sm">基金排名</span>
+      </a>
+      <a class="nav-link flex items-center gap-3 px-3 py-2 rounded text-slate-700 cursor-pointer" data-view="analysis">
+        <span class="w-5 text-center">📊</span><span class="text-sm">业绩分析</span>
+      </a>
+      <a class="nav-link flex items-center gap-3 px-3 py-2 rounded text-slate-700 cursor-pointer" data-view="risk">
+        <span class="w-5 text-center">⚠</span><span class="text-sm">风险监控</span>
+      </a>
+    </nav>
+    <div class="absolute bottom-4 left-3 right-3 text-[11px] text-slate-400 leading-relaxed">
+      WM Fund Analytics v3.0 · 数据实时更新
+    </div>
+  </aside>
+
+  <main class="flex-1 p-6 scroll-area" id="main"></main>
+</div>
+
+<script>
+// ============ State ============
+const state = { view: 'home', funds: [], loading: true };
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+const pctCls = v => v >= 0 ? 'up' : 'down';
+
+// ============ Data Loading ============
+async function loadData() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    state.funds = data.funds || [];
+    state.loading = false;
+    $('#dataStatus').textContent = `✅ 已加载 ${state.funds.length} 只基金`;
+    render();
+  } catch (e) {
+    $('#dataStatus').textContent = '❌ 数据加载失败';
+    console.error(e);
+  }
+}
+
+// ============ Views ============
+function renderNav() {
+  $$('.nav-link').forEach(a => a.classList.toggle('active', a.dataset.view === state.view));
+}
+
+function renderHome() {
+  if (state.loading) return '<div class="text-center py-20 text-slate-400">加载中...</div>';
+  
+  const topFunds = state.funds.slice(0, 4);
+  const avgSharpe = state.funds.length ? (state.funds.reduce((s,f) => s + (f.sharpe||0), 0) / state.funds.length).toFixed(2) : '0.00';
+  const avgYtd = state.funds.length ? (state.funds.reduce((s,f) => s + (f.ytd||0), 0) / state.funds.length).toFixed(2) : '0.00';
+  
+  return `
+  <div class="fade-in space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold">总览</h1>
+        <p class="text-sm text-slate-500 mt-1">WM Capital · ${state.funds.length} 只基金 · 实时数据</p>
+      </div>
+      <button class="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700" onclick="location.reload()">🔄 刷新数据</button>
+    </div>
+
+    <div class="grid grid-cols-5 gap-4">
+      ${[
+        {l:'基金总数',v:state.funds.length,sub:'在管基金'},
+        {l:'平均 YTD',v:fmtPct(avgYtd),cls:pctCls(avgYtd),sub:'简单平均'},
+        {l:'平均 Sharpe',v:avgSharpe,sub:'风险调整收益'},
+        {l:'最佳基金',v:topFunds[0]?.name||'-',sub:`YTD ${fmtPct(topFunds[0]?.ytd||0)}`},
+        {l:'数据更新',v:'实时',sub:'自动同步'},
+      ].map(m=>`
+        <div class="card metric p-4">
+          <div class="text-xs text-slate-500 mb-1">${m.l}</div>
+          <div class="text-2xl font-semibold ${m.cls||''}">${m.v}</div>
+          <div class="text-[11px] text-slate-400 mt-1">${m.sub}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="grid grid-cols-4 gap-4">
+      ${topFunds.map(f=>`
+        <div class="card p-4 cursor-pointer hover:border-blue-300" onclick="state.view='analysis';render()">
+          <div class="font-semibold mb-1">${f.name||'N/A'}</div>
+          <div class="text-xs text-slate-500 mb-3">${f.strategy||'策略未知'}</div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div><div class="text-slate-400">YTD</div><div class="${pctCls(f.ytd||0)} font-medium">${fmtPct(f.ytd||0)}</div></div>
+            <div><div class="text-slate-400">Sharpe</div><div class="font-medium">${(f.sharpe||0).toFixed(2)}</div></div>
+            <div><div class="text-slate-400">MaxDD</div><div class="down font-medium">${f.maxDD||0}%</div></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card p-5">
+      <div class="font-semibold mb-4">全部基金</div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="text-left py-2 px-3 font-medium text-slate-600">基金名称</th>
+              <th class="text-left py-2 px-3 font-medium text-slate-600">策略</th>
+              <th class="text-right py-2 px-3 font-medium text-slate-600">YTD</th>
+              <th class="text-right py-2 px-3 font-medium text-slate-600">年化</th>
+              <th class="text-right py-2 px-3 font-medium text-slate-600">Sharpe</th>
+              <th class="text-right py-2 px-3 font-medium text-slate-600">MaxDD</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.funds.map(f=>`
+              <tr class="border-t border-slate-100 hover:bg-slate-50">
+                <td class="py-2 px-3 font-medium">${f.name||'N/A'}</td>
+                <td class="py-2 px-3 text-slate-500">${f.strategy||'-'}</td>
+                <td class="py-2 px-3 text-right ${pctCls(f.ytd||0)}">${fmtPct(f.ytd||0)}</td>
+                <td class="py-2 px-3 text-right">${(f.annual||0).toFixed(2)}%</td>
+                <td class="py-2 px-3 text-right">${(f.sharpe||0).toFixed(2)}</td>
+                <td class="py-2 px-3 text-right down">${f.maxDD||0}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function renderRanking() {
+  return `<div class="fade-in"><h1 class="text-2xl font-semibold mb-4">基金排名</h1><div class="text-slate-500">功能开发中...</div></div>`;
+}
+
+function renderAnalysis() {
+  return `<div class="fade-in"><h1 class="text-2xl font-semibold mb-4">业绩分析</h1><div class="text-slate-500">功能开发中...</div></div>`;
+}
+
+function renderRisk() {
+  return `<div class="fade-in"><h1 class="text-2xl font-semibold mb-4">风险监控</h1><div class="text-slate-500">功能开发中...</div></div>`;
+}
+
+function render() {
+  renderNav();
+  const viewMap = {
+    home: renderHome,
+    ranking: renderRanking,
+    analysis: renderAnalysis,
+    risk: renderRisk,
+  };
+  $('#main').innerHTML = (viewMap[state.view] || renderHome)();
+}
+
+// ============ Event Listeners ============
+$$('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    state.view = link.dataset.view;
+    render();
+  });
+});
+
+// ============ Init ============
+loadData();
+</script>
+
+</body>
+</html>

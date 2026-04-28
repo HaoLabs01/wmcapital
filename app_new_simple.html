@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WM Capital · 基金业绩评价系统</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #1e293b; }
+.header { background: white; border-bottom: 1px solid #e2e8f0; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.logo { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #ef4444, #a855f8); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+.header-title { margin-left: 12px; }
+.header-title h1 { font-size: 16px; font-weight: 600; }
+.header-title p { font-size: 11px; color: #64748b; margin-top: 2px; }
+.container { display: flex; }
+.sidebar { width: 224px; background: white; border-right: 1px solid #e2e8f0; padding: 16px 12px; height: calc(100vh - 57px); position: sticky; top: 57px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; color: #475569; cursor: pointer; margin-bottom: 4px; font-size: 14px; }
+.nav-item:hover { background: #f1f5f9; }
+.nav-item.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+.main { flex: 1; padding: 24px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+.metric-label { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+.metric-value { font-size: 24px; font-weight: 600; }
+.metric-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.up { color: #dc2626; }
+.down { color: #16a34a; }
+.card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.fund-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.fund-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+.fund-card:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+.fund-name { font-weight: 600; margin-bottom: 4px; }
+.fund-strategy { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+.fund-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px; }
+.stat-label { color: #94a3b8; margin-bottom: 2px; }
+.stat-value { font-weight: 500; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 8px 12px; background: #f8fafc; font-weight: 500; color: #475569; font-size: 13px; }
+td { padding: 12px; border-top: 1px solid #f1f5f9; font-size: 14px; }
+tr:hover { background: #f8fafc; }
+</style>
+</head>
+<body>
+<header class="header">
+  <div style="display: flex; align-items: center;">
+    <div class="logo">W</div>
+    <div class="header-title">
+      <h1>WM Capital · 基金业绩评价</h1>
+      <p>多维度指标分析 · 夏普比率 · 最大回撤 · 风险调整收益</p>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div id="dataStatus" style="font-size: 12px; color: #64748b;">加载中...</div>
+    <button onclick="location.reload()" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; font-size: 13px;">🔄 刷新</button>
+  </div>
+</header>
+
+<div class="container">
+  <aside class="sidebar">
+    <nav>
+      <div class="nav-item active" data-view="home"><span>⌂</span><span>总览</span></div>
+      <div class="nav-item" data-view="ranking"><span>☤</span><span>基金排名</span></div>
+      <div class="nav-item" data-view="analysis"><span>📊</span><span>业绩分析</span></div>
+      <div class="nav-item" data-view="risk"><span>⚠</span><span>风险监控</span></div>
+    </nav>
+  </aside>
+
+  <main class="main" id="main">
+    <div style="text-align: center; padding: 40px; color: #94a3b8;">加载中...</div>
+  </main>
+</div>
+
+<script>
+const state = { view: 'home', funds: [], loading: true };
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+const pctCls = v => v >= 0 ? 'up' : 'down';
+
+async function loadData() {
+  console.log('🔍 开始加载数据...');
+  try {
+    const res = await fetch('/api/data');
+    console.log('📡 响应状态:', res.status);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    console.log('✅ 数据加载成功:', data);
+    state.funds = data.funds || [];
+    state.loading = false;
+    $('#dataStatus').textContent = '✅ 已加载 ' + state.funds.length + ' 只基金';
+    render();
+  } catch (e) {
+    console.error('❌ 加载失败:', e);
+    $('#dataStatus').textContent = '❌ 数据加载失败：' + e.message;
+    $('#main').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;"><h2 style="font-size:20px;margin-bottom:8px;">数据加载失败</h2><p>' + e.message + '</p></div>';
+  }
+}
+
+function renderNav() {
+  $$('.nav-item').forEach(a => {
+    if (a.dataset.view === state.view) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+}
+
+function renderHome() {
+  if (state.loading) return '<div style="text-align:center;padding:40px;color:#94a3b8;">加载中...</div>';
+  
+  if (!state.funds || state.funds.length === 0) {
+    return '<div style="text-align:center;padding:40px;"><h2 style="font-size:20px;color:#64748b;margin-bottom:8px;">暂无数据</h2><p style="color:#94a3b8;">请上传 CSV 数据文件</p></div>';
+  }
+  
+  const topFunds = state.funds.slice(0, 4);
+  const avgSharpe = (state.funds.reduce((s,f) => s + (f.sharpe||0), 0) / state.funds.length).toFixed(2);
+  const avgYtd = (state.funds.reduce((s,f) => s + (f.ytd||0), 0) / state.funds.length).toFixed(2);
+  
+  return `
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:24px;font-weight:600;margin-bottom:4px;">总览</h1>
+      <p style="color:#64748b;font-size:14px;">WM Capital · ${state.funds.length} 只基金 · 实时数据</p>
+    </div>
+    
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-label">基金总数</div><div class="metric-value">${state.funds.length}</div><div class="metric-sub">在管基金</div></div>
+      <div class="metric-card"><div class="metric-label">平均 YTD</div><div class="metric-value ${pctCls(avgYtd)}">${fmtPct(avgYtd)}</div><div class="metric-sub">简单平均</div></div>
+      <div class="metric-card"><div class="metric-label">平均 Sharpe</div><div class="metric-value">${avgSharpe}</div><div class="metric-sub">风险调整收益</div></div>
+      <div class="metric-card"><div class="metric-label">最佳基金</div><div class="metric-value" style="font-size:18px;">${topFunds[0]?.name||'-'}</div><div class="metric-sub">YTD ${fmtPct(topFunds[0]?.ytd||0)}</div></div>
+      <div class="metric-card"><div class="metric-label">数据更新</div><div class="metric-value">实时</div><div class="metric-sub">自动同步</div></div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">全部基金</div>
+      <table>
+        <thead><tr><th>基金名称</th><th>策略</th><th style="text-align:right;">YTD</th><th style="text-align:right;">年化</th><th style="text-align:right;">Sharpe</th><th style="text-align:right;">MaxDD</th></tr></thead>
+        <tbody>
+          ${state.funds.map(f => `
+            <tr>
+              <td style="font-weight:500;">${f.name||'N/A'}</td>
+              <td style="color:#64748b;">${f.strategy||'-'}</td>
+              <td class="${pctCls(f.ytd||0)}" style="text-align:right;font-weight:500;">${fmtPct(f.ytd||0)}</td>
+              <td style="text-align:right;">${(f.annual||0).toFixed(2)}%</td>
+              <td style="text-align:right;">${(f.sharpe||0).toFixed(2)}</td>
+              <td class="down" style="text-align:right;">${f.maxDD||0}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function render() {
+  renderNav();
+  $('#main').innerHTML = renderHome();
+}
+
+$$('.nav-item').forEach(link => {
+  link.addEventListener('click', () => {
+    state.view = link.dataset.view;
+    render();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>

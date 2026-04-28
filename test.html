@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+<h1>WM Capital 测试页面</h1>
+<div id="status">测试中...</div>
+<div id="data"></div>
+<script>
+async function test() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    document.getElementById('status').textContent = '✅ API 连接成功！';
+    document.getElementById('data').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  } catch (e) {
+    document.getElementById('status').textContent = '❌ 错误：' + e.message;
+  }
+}
+test();
+</script>
+</body>
+</html>

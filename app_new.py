@@ -470,6 +470,49 @@ class AnalyticsHandler(http.server.SimpleHTTPRequestHandler):
                            for k, v in CURRENT_METRICS.items()}
             self.wfile.write(json.dumps(metrics_output, ensure_ascii=False).encode('utf-8'))
         
+        elif self.path == '/api/data':
+            # GET 方式：返回简化的基金数据列表（用于新 UI）
+            try:
+                funds_list = []
+                for fund_name, fund_data in CURRENT_METRICS.items():
+                    # 提取真实数据（字段名是中文的）
+                    ann_ret_str = fund_data.get('年化收益率', '0%')
+                    ann_ret = float(ann_ret_str.replace('%', '')) if ann_ret_str else 0
+                    
+                    sharpe_str = fund_data.get('夏普比率', '0')
+                    sharpe = float(sharpe_str) if sharpe_str else 0
+                    
+                    maxdd_str = fund_data.get('最大回撤', '0%')
+                    maxdd = float(maxdd_str.replace('%', '')) if maxdd_str else 0
+                    
+                    vol_str = fund_data.get('年化波动率', '0%')
+                    vol = float(vol_str.replace('%', '')) if vol_str else 0
+                    
+                    cum_ret_str = fund_data.get('期间累计收益率 (数字)', '0')
+                    cum_ret = float(cum_ret_str) if cum_ret_str else 0
+                    
+                    funds_list.append({
+                        'name': fund_name,
+                        'strategy': fund_data.get('类型', '未知'),
+                        'ytd': cum_ret,  # 使用累计收益作为 YTD 近似
+                        'annual': ann_ret,
+                        'sharpe': sharpe,
+                        'maxDD': maxdd,
+                        'vol': vol,
+                    })
+                funds_list.sort(key=lambda x: x['ytd'], reverse=True)
+                response = {"success": True, "funds": funds_list, "count": len(funds_list)}
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+        
         elif self.path == '/api/navdata':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -659,7 +702,8 @@ class AnalyticsHandler(http.server.SimpleHTTPRequestHandler):
 
 # ============== 主程序 ==============
 
-PORT = 80
+import os
+PORT = int(os.environ.get("PORT", 8082))
 
 def main():
     print("=" * 60)
